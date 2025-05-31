@@ -1,6 +1,7 @@
 import 'package:csv/csv.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:immobilier_apk/scr/ui/pages/historique/historique.dart';
 import 'package:my_widgets/real_state/models/vente.dart';
 import 'package:universal_html/html.dart';
 
@@ -54,6 +55,21 @@ class _HomePageState extends State<HomePage> {
           color: Colors.amber,
         ),
         centerTitle: true,
+        actions: [
+          IconButton(icon: StreamBuilder(stream: DB.firestore(Collections.rechargements).doc("Tilapia").snapshots(), builder: (context, snapshot) {
+            if(snapshot.connectionState == ConnectionState.waiting){
+              return SizedBox(height: 30, width: 30,  child: CircularProgressIndicator(strokeWidth: 1, color: Colors.amber,));
+            }
+            if(snapshot.hasError){
+              return Icon(Icons.warning_rounded, color: Colors.amber,);
+            }
+            var stockDisponible = snapshot.data!.data()!['stock_actuel'];
+
+            return EText(stockDisponible.toString(), size: 55, font: "Bestime", color: Colors.teal,);
+          },), onPressed: (){
+            Get.to(HistoriqueRechargements());
+          },)
+        ],
       ),
       body: FutureBuilder(
         future: DB.firestore(Collections.ventes).get(),
