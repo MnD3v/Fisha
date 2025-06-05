@@ -29,12 +29,10 @@ class LoadingPage extends StatelessWidget {
                 () => AnimatedOpacity(
                   duration: 333.milliseconds,
                   opacity: showLogo.value ? 1 : 0,
-                  child: const Column(
+                  child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      SizedBox(
-                          height: 120,
-                          child: EText("Fisha", size: 55, font: "Bestime" , color: Colors.amber,)),
+                    Image.asset(Assets.icons("launch_icon.png"), height: 80,),
                     ],
                   ),
                 ),
@@ -48,7 +46,7 @@ class LoadingPage extends StatelessWidget {
                 child: loadEnd.value || !showLogo.value
                     ? 0.h
                     : LoadingAnimationWidget.threeRotatingDots(
-                        color: AppColors.color500,
+                        color:Colors.blue,
                         size: 50,
                         
                       ),

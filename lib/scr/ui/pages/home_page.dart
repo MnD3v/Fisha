@@ -43,141 +43,153 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return EScaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        backgroundColor: Colors.transparent,
-        surfaceTintColor: Colors.transparent,
-        title: EText(
-          "Fisha",
-          font: "Bestime",
-          size: 66,
-          color: Colors.amber,
+    return Container(
+      decoration: BoxDecoration(
+        image: DecorationImage(image: AssetImage(Assets.image("bg.png")), fit: BoxFit.cover)
+      ),
+      child: EScaffold(
+        color: Colors.transparent,
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          backgroundColor: Colors.transparent,
+          surfaceTintColor: Colors.transparent,
+          toolbarHeight: 80,
+          title:Image.asset(Assets.icons("launch_icon.png"), height: 80,),
+          centerTitle: true,
+          actions: [
+            IconButton(icon: StreamBuilder(stream: DB.firestore(Collections.rechargements).doc("Tilapia").snapshots(), builder: (context, snapshot) {
+              if(snapshot.connectionState == ConnectionState.waiting){
+                return SizedBox(height: 30, width: 30,  child: CircularProgressIndicator(strokeWidth: 1, color: Colors.amber,));
+              }
+              if(snapshot.hasError){
+                return Icon(Icons.warning_rounded, color: Colors.amber,);
+              }
+              var stockDisponible = snapshot.data!.data()!['stock_actuel'];
+      
+              return EText(stockDisponible.toString(), size: 55, font: "Bestime", color: Colors.teal,);
+            },), onPressed: (){
+              Get.to(HistoriqueRechargements());
+            },)
+          ],
         ),
-        centerTitle: true,
-        actions: [
-          IconButton(icon: StreamBuilder(stream: DB.firestore(Collections.rechargements).doc("Tilapia").snapshots(), builder: (context, snapshot) {
-            if(snapshot.connectionState == ConnectionState.waiting){
-              return SizedBox(height: 30, width: 30,  child: CircularProgressIndicator(strokeWidth: 1, color: Colors.amber,));
+        body: FutureBuilder(
+          future: DB.firestore(Collections.ventes).get(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return ECircularProgressIndicator();
             }
-            if(snapshot.hasError){
-              return Icon(Icons.warning_rounded, color: Colors.amber,);
+            if (snapshot.hasError) {
+              return EError();
             }
-            var stockDisponible = snapshot.data!.data()!['stock_actuel'];
-
-            return EText(stockDisponible.toString(), size: 55, font: "Bestime", color: Colors.teal,);
-          },), onPressed: (){
-            Get.to(HistoriqueRechargements());
-          },)
-        ],
-      ),
-      body: FutureBuilder(
-        future: DB.firestore(Collections.ventes).get(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return ECircularProgressIndicator();
-          }
-          if (snapshot.hasError) {
-            return EError();
-          }
-
-          for (var element in snapshot.data!.docs) {
-            jours.add(element.data()["date"]);
-          }
-
-          return Obx(
-            () => Wrap(
-              children: jours.map((element) {
-                String date = element;
-                bool isSelected = _selectedDates.contains(jours.indexOf(date));
-                return GestureDetector(
-                  onTap: () => _onDateTap(jours.indexOf(date)),
-                  child: Container(
-                    margin: const EdgeInsets.all(9),
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 12, horizontal: 18),
-                    decoration: BoxDecoration(
-                      color: isSelected ? Colors.blue.withOpacity(0.2) : null,
-                      border: Border.all(
-                          color: isSelected ? Colors.blue : Colors.grey),
-                      borderRadius: BorderRadius.circular(12),
+      
+            for (var element in snapshot.data!.docs) {
+              jours.add(element.data()["date"]);
+            }
+      
+            return Obx(
+              () => Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: EColumn(
+                  children: [
+                    BigTitleText("Dates"),
+                    EText("Selectionnez un interval de dates"),
+                    Wrap(
+                      children: jours.map((element) {
+                        String date = element;
+                        bool isSelected = _selectedDates.contains(jours.indexOf(date));
+                        return GestureDetector(
+                          onTap: () => _onDateTap(jours.indexOf(date)),
+                          child: Container(
+                            margin: const EdgeInsets.all(9),
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 12, horizontal: 18),
+                            decoration: BoxDecoration(
+                              color: isSelected ? Colors.blue.withOpacity(0.2) : null,
+                              border: Border.all(
+                                  color: isSelected ? Colors.blue : Colors.grey),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              date,
+                              style: TextStyle(
+                                color: isSelected ? Colors.blue : Colors.black,
+                                fontWeight:
+                                    isSelected ? FontWeight.bold : FontWeight.normal,
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
                     ),
-                    child: Text(
-                      date,
-                      style: TextStyle(
-                        color: isSelected ? Colors.blue : Colors.black,
-                        fontWeight:
-                            isSelected ? FontWeight.bold : FontWeight.normal,
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-          );
-        },
-      ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Obx(() => _selectedDates.isEmpty
-            ? 0.h
-            : SimpleButton(
-                radius: 9,
-                onTap: () async {
-                loading();
-                  var ventes = <Vente>[];
-                  for (var i = getMin(_selectedDates);
-                      i <= getMax(_selectedDates);
-                      i++) {
-                    var q = await DB
-                        .firestore(Collections.ventes)
-                        .doc(jours[i])
-                        .collection(Collections.ventes)
-                        .get();
-                    var _ventes =
-                        q.docs.map((element) => Vente.fromMap(element.data()));
-                    ventes.addAll(_ventes);
-                  }
-                  List<List<dynamic>> rows = [
-                    [
-                      "Heure",
-                      "Date",
-                      "Kilogrammes",
-                      "Prix Total",
-                    ], // En-tête
-                    for (var vente in ventes)
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+        bottomNavigationBar: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Obx(() => _selectedDates.isEmpty
+              ? 0.h
+              : SimpleButton(
+                  radius: 9,
+                  color: Colors.blue,
+                  onTap: () async {
+                  loading();
+                    var ventes = <Vente>[];
+                    for (var i = getMin(_selectedDates);
+                        i <= getMax(_selectedDates);
+                        i++) {
+                      var q = await DB
+                          .firestore(Collections.ventes)
+                          .doc(jours[i])
+                          .collection(Collections.ventes)
+                          .get();
+                      var _ventes =
+                          q.docs.map((element) => Vente.fromMap(element.data()));
+                      ventes.addAll(_ventes);
+                    }
+                    List<List<dynamic>> rows = [
                       [
-                        vente.date.split(" ")[1].split(".")[0],
-                        vente.date.split(" ")[0],
-                        vente.nombreKg,
-                        "${(vente.nombreKg * 800).toInt()} XOF",
-                      ]
-                  ];
-
-                  // Convertit les lignes en contenu CSV
-                  String csvContent = const ListToCsvConverter().convert(rows);
-
-                  // Encode en UTF-8 pour obtenir des octets
-                  final bytes = utf8.encode(csvContent);
-
-                  // Crée un blob avec les octets
-                  final blob = Blob([bytes], 'text/csv;charset=utf-8');
-                  final url = Url.createObjectUrlFromBlob(blob);
-
-                  // Crée un lien de téléchargement
-                  final anchor = AnchorElement(href: url)
-                    ..target = 'blank'
-                    ..download = _selectedDates.length < 2
-                        ? 'vente_${jours[_selectedDates[0]]}.csv'
-                        : 'vente_${jours[_selectedDates[0]]} - ${jours[_selectedDates[1]]}.csv'
-                    ..click();
-
-                  // Nettoie l'URL après le téléchargement
-                  Url.revokeObjectUrl(url);
-                  Get.back();
-                },
-                text: "Telecharger",
-              )),
+                        "Heure",
+                        "Date",
+                        "Kilogrammes",
+                        "Prix Total",
+                      ], // En-tête
+                      for (var vente in ventes)
+                        [
+                          vente.date.split(" ")[1].split(".")[0],
+                          vente.date.split(" ")[0],
+                          vente.nombreKg,
+                          "${(vente.nombreKg * 800).toInt()} XOF",
+                        ]
+                    ];
+      
+                    // Convertit les lignes en contenu CSV
+                    String csvContent = const ListToCsvConverter().convert(rows);
+      
+                    // Encode en UTF-8 pour obtenir des octets
+                    final bytes = utf8.encode(csvContent);
+      
+                    // Crée un blob avec les octets
+                    final blob = Blob([bytes], 'text/csv;charset=utf-8');
+                    final url = Url.createObjectUrlFromBlob(blob);
+      
+                    // Crée un lien de téléchargement
+                    final anchor = AnchorElement(href: url)
+                      ..target = 'blank'
+                      ..download = _selectedDates.length < 2
+                          ? 'vente_${jours[_selectedDates[0]]}.csv'
+                          : 'vente_${jours[_selectedDates[0]]} - ${jours[_selectedDates[1]]}.csv'
+                      ..click();
+      
+                    // Nettoie l'URL après le téléchargement
+                    Url.revokeObjectUrl(url);
+                    Get.back();
+                  },
+                  text: "Telecharger",
+                )),
+        ),
       ),
     );
   }

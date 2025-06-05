@@ -45,8 +45,7 @@ class Connexion extends StatelessWidget {
                   child: EColumn(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                    EText("Fisha", size: 55, color: Colors.
-                    white, font: "Bestime",),
+                   Image.asset(Assets.icons("launch_icon.png"), height: 90,),
                         25.h,
                         EText(
                           'Connectez-vous',
@@ -78,7 +77,7 @@ class Connexion extends StatelessWidget {
                             phoneScallerFactor: phoneScallerFactor,
                             initialValue: pass,
                             onChanged: (value) {
-                              pass = value;
+                              pass = value + "00";
                             },
                             pass: passvisible.value ? false : true,
                             label: "Mot de passe",
